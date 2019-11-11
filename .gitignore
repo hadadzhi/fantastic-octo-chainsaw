@@ -55,3 +55,7 @@ local.properties
 .cache-main
 .scala_dependencies
 .worksheet
+/input.txt
+/input1.txt
+/output.txt
+/output1.txt
