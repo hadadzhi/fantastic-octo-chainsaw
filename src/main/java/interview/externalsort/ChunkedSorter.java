@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.reflect.Array;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -119,14 +118,9 @@ public class ChunkedSorter {
                 chunks.add(boundedRunAsync(() -> sortChunk(lines)));
             }
 
-//            mergeAndDelete(chunks, output);
-
-// Doesn't seem to scale
             if (chunks.size() < nThreads * 2) {
                 mergeAndDelete(chunks, output);
             } else {
-                System.err.println("Doing threaded merge");
-
                 final List<List<Future<Path>>> parts = partition(chunks, nThreads);
                 chunks.clear();
 
