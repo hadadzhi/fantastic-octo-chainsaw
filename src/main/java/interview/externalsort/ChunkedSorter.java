@@ -119,29 +119,31 @@ public class ChunkedSorter {
                 chunks.add(boundedRunAsync(() -> sortChunk(lines)));
             }
 
-            mergeAndDelete(chunks, output);
+//            mergeAndDelete(chunks, output);
 
 // Doesn't seem to scale
-//            if (chunks.size() < nThreads * 2) {
-//                mergeAndDelete(chunks, output);
-//            } else {
-//                final List<List<Future<Path>>> parts = partition(chunks, nThreads);
-//                chunks.clear();
-//
-//                for (final List<Future<Path>> m : parts) {
-//                    chunks.add(
-//                            boundedRunAsync(() -> {
-//                                final Path tmp = Files.createTempFile("merge-", ".txt");
-//                                try (final BufferedWriter w = Files.newBufferedWriter(tmp, Charset.defaultCharset())) {
-//                                    mergeAndDelete(m, w);
-//                                }
-//                                return tmp;
-//                            })
-//                    );
-//                }
-//
-//                mergeAndDelete(chunks, output);
-//            }
+            if (chunks.size() < nThreads * 2) {
+                mergeAndDelete(chunks, output);
+            } else {
+                System.err.println("Doing threaded merge");
+
+                final List<List<Future<Path>>> parts = partition(chunks, nThreads);
+                chunks.clear();
+
+                for (final List<Future<Path>> m : parts) {
+                    chunks.add(
+                            boundedRunAsync(() -> {
+                                final Path tmp = Files.createTempFile("merge-", ".txt");
+                                try (final BufferedWriter w = Files.newBufferedWriter(tmp, Charset.defaultCharset())) {
+                                    mergeAndDelete(m, w);
+                                }
+                                return tmp;
+                            })
+                    );
+                }
+
+                mergeAndDelete(chunks, output);
+            }
         } catch (Exception e) {
             if (e instanceof RuntimeException) {
                 throw (RuntimeException) e;
